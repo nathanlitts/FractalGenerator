@@ -1,7 +1,7 @@
 import java.awt.image.BufferedImage;
 
 /**
- * 
+ *
  * @author Nathan Litts
  *
  */
@@ -13,35 +13,58 @@ public class Mandelbrot
     private int width;
     private int height;
     private double[] center = {0, 0};
+    private boolean ready;
+	private int exponent;
 
+    
     /**
      * constructor:
      * sets width and height according to parameters.
      * initializes fields
-     * makes plane then makes set 
-     * 
+     * makes plane then makes set
+     *
      */
-    public Mandelbrot(int width, int height) {
-        this.width = width;
-        this.height = height;
-        this.maxIter = 66;
+    public Mandelbrot(int w, int h) {
+    	ready = false;
+    	exponent = 2;
+        width = w;
+        height = h;
+        maxIter = 50;
         step = 4 * (1.0 / width);
         plane = new ComplexNumber[height][width];
         makePlane();
         makeSet();
+        ready = true;
     }
     
     /**
+     * Resets the model.
+     */
+    public void reset() {
+    	ready = false;
+        maxIter = 50;
+        step = 4 * (1.0 / width);
+        center[0] = 0;
+        center [1] = 0;
+        plane = new ComplexNumber[height][width];
+        makePlane();
+        makeSet();
+        ready = true;
+    	
+    }
+
+    
+    /**
      * Sets all the complex numbers in the plane.
-     * Uses center as origin point, then repeatedly 
+     * Uses center as origin point, then repeatedly
      * adds step to make the complex numbers different.
      */
-    public void makePlane() {  
+    public void makePlane() {
         double imaginary = center[1] + step * (height / 2);
         double real = center[0] - step * (width / 2);
-        
-        for (int row = 0; row < height; row++) {      
-            for (int col = 0; col < width; col++) { 
+
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
                     plane[row][col] = new ComplexNumber(real, imaginary);
                 real += step;
             }
@@ -57,34 +80,31 @@ public class Mandelbrot
      * isInSet() to change this value to a number -1-100
      */
     public void makeSet() {
-        for (int row = 0; row < height; row++) {      
-            for (int col = 0; col < width; col++) {
-                if (plane[row][col].getValue() == -2) {
-                    isInSet(plane[row][col]);
-                }
-            }
-        }
+        for (int row = 0; row < height; row++) 
+            for (int col = 0; col < width; col++) 
+                if (plane[row][col].getValue() == -2) 
+                    calculateValue(plane[row][col]);
     }
 
-    
+
     /**
-     * Takes a complex number as a parameter and sets its value field. 
+     * Takes a complex number as a parameter and sets its value field.
      * Repeated multiplication is done on the complex number. If the
-     * number begins to trend to infinity, its value is set 0-100. 
-     * If we multiply maxIter number of times and the number 
+     * number begins to trend to infinity, its value is set 0-100.
+     * If we multiply maxIter number of times and the number
      * does not trend toward infinity, then its value is set to -1.
      */
-    public void isInSet(ComplexNumber c) {
+    public void calculateValue(ComplexNumber c) {
         ComplexNumber z = new ComplexNumber(0, 0);
         int i = 0;
         while (i < maxIter && z.getReal() > -2 && z.getImaginary() > -2
-            && z.getReal() < 2 && z.getImaginary() < 2) 
-        {                
-            z.exp(2);
+            && z.getReal() < 2 && z.getImaginary() < 2)
+        {
+            z.pow(exponent);
             z.add(c);
-           
             i++;
         }
+        
         if (i == 1) i = 2;
         if (i == maxIter) {
             c.setValue(-1);
@@ -94,7 +114,8 @@ public class Mandelbrot
             c.setValue(percentage);
         }
     }
-  
+
+    
     /**
      * Creates a graphical representation of the set.
      * The value field of each complex number in the plane
@@ -102,14 +123,14 @@ public class Mandelbrot
      * Returns a buffered image.
      */
     public BufferedImage getImage() {
-        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int row = 0; row < height; row++) {      
+        BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
-                int value = plane[row][col].getValue(); 
-                int p = getPixel(value);       
+                int value = plane[row][col].getValue();
+                int p = getPixel(value);
                 img.setRGB(col, row, p);
             }
-        }   
+        }
         return img;
     }
 
@@ -122,7 +143,6 @@ public class Mandelbrot
      * returns an integer pixel value.
      */
     public int getPixel(int value) { //gradual color shift
-        int a = 255;
         int r;
         int g;
         int b;
@@ -141,84 +161,77 @@ public class Mandelbrot
             b = (int)(Math.sin(value2 + 4) * 127 + 128);
         }
 
-        int p = (a << 24) | (r << 16) | (g << 8) | b;
+        int p = (r << 16) | (g << 8) | b;
 
         return p;
 
     }
+
     
     public int getWidth() {
         return width;
     }
-    
     public int getHeight() {
         return height;
     }
     
-    public int getMonoPixel(int value) { //two tone
-        int a = 255;
-        int r;
-        int g;
-        int b;
-
-        if (value < 0) {
-            r = 0;
-            g = 0;
-            b = 0;
-        }
-
-        else {
-            r = 250;
-            g = 250;
-            b = 250;
-        }
-
-        int p = (a << 24) | (r << 16) | (g << 8) | b;
-
-        return p;
-
+    public String getEquation()
+    {
+    	return "<html>z<sub>n+1</sub> = z<sup>2</sup> + c</html>";
     }
     
+    public boolean isReady() {
+    	return ready;
+    }
+
 
     /**
      * This method makes the image zoom in and
      * out. The amount of zoom is based off
-     * the amount parameter. An amount < 0 zooms out.
-     * > 0 zooms in. The step value is changed, and
+     * the amount parameter. An amount < 1 zooms out.
+     * > 1 zooms in. The step value is changed, and
      * the plane and set are recalculated.
      */
     public void zoom(double amount)
     {
-        step = step / amount;         
-        makePlane();      
+    	ready = false;
+        step = step / amount;
+        makePlane();
+        makeSet();
+        ready = true;
+    }
+
+    
+    public void setIterations(int x) {
+        maxIter = x;
+        makePlane();
         makeSet();
     }
     
-    public void recenter(int xs, int ys) {
-        center[0] += xs * step;
-        center[1] += ys * step;
-    }
-    
-    public void increaseMaxIter(int x) {
-        maxIter += x;
-        makePlane();      
+    public void setExponent(int number) {
+		exponent = number;
+		makePlane();
         makeSet();
-    }
-  
+		
+	}
+
+    
     /**
-     * Shifts all the complex numbers in plane. 
+     * Shifts all the complex numbers in plane.
      * xs = shift in horizontal direction. negative
      * numbers imply a left shift.
      * ys = shift in vertical direction. negative
      * numbers imply a downward shift.
-     * 
-     * If a complex number has already been tested, 
-     * its value field is preserved. If a new 
-     * complex number is introduced, its value is 
+     *
+     * If a complex number has already been tested,
+     * its value field is preserved. If a new
+     * complex number is introduced, its value is
      * set to -2 and is immediately reevaluated
      * in makeSet()
      */
     public void shift(int xs, int ys) {
+    	ready = false;
+    	
         center[0] = center[0] + xs * step;
         center[1] = center[1] + ys * step;
 
@@ -229,8 +242,8 @@ public class Mandelbrot
         double imaginary = center[1] + step * (height / 2);
         double real = center[0] - step * (width / 2);
 
-        for (int row = 0; row < height; row++) {      
-            for (int col = 0; col < width; col++) { 
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
                 int row2 = row - ys;
                 int col2 = col + xs;
                 if (row2 >= 0 && row2 < height
@@ -249,8 +262,11 @@ public class Mandelbrot
 
         plane = planeCopy;
         makeSet();
+        
+        ready = true;
     }
 
-   
+	
+
 
 }

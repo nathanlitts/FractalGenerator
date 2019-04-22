@@ -1,5 +1,4 @@
 
-
 public class ComplexNumber
 {
     private double real;
@@ -32,18 +31,11 @@ public class ComplexNumber
         real = tempReal;
     }
     
-    public void exp(int x) {
+    public void pow(int x) {
+    	ComplexNumber copy = new ComplexNumber(real, imaginary);
         for (int i = 1; i < x; i++) {
-            double tempReal = (real * real) - (imaginary * imaginary);
-            imaginary = (real * imaginary) + (imaginary * real);
-            real = tempReal;
+            multiply(copy);
         }
-    }
-    
-    public void burningShip(double x, double y) {
-        double tempReal = (real * real) - (imaginary * imaginary) + x;
-        imaginary = Math.abs(2 * real * imaginary) + y;
-        real = Math.abs(tempReal);
     }
     
     public double getReal() {
