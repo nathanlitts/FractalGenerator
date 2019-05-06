@@ -1,4 +1,8 @@
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -13,8 +17,13 @@ public class Mandelbrot
     private int width;
     private int height;
     private double[] center = {0, 0};
-    private boolean ready;
 	private int exponent;
+	private ComplexNumber constant = new ComplexNumber(0, 0);
+	
+	private BufferedImage image;
+	
+	private ColorPicker cp;
+	private Calculator calc;
 
     
     /**
@@ -25,23 +34,24 @@ public class Mandelbrot
      *
      */
     public Mandelbrot(int w, int h) {
-    	ready = false;
-    	exponent = 2;
         width = w;
         height = h;
+    	exponent = 2;
         maxIter = 50;
         step = 4 * (1.0 / width);
         plane = new ComplexNumber[height][width];
+        
+        cp = new Rainbow();
+        calc = new MandelbrotCalc();
         makePlane();
         makeSet();
-        ready = true;
+
     }
     
     /**
      * Resets the model.
      */
     public void reset() {
-    	ready = false;
         maxIter = 50;
         step = 4 * (1.0 / width);
         center[0] = 0;
@@ -49,7 +59,6 @@ public class Mandelbrot
         plane = new ComplexNumber[height][width];
         makePlane();
         makeSet();
-        ready = true;
     	
     }
 
@@ -75,44 +84,11 @@ public class Mandelbrot
 
 
     /**
-     * All complex numbers are initialized with a value of -2.
-     * For each complex number in the plane, this method calls
-     * isInSet() to change this value to a number -1-100
+     * Uses the calculator to set the value field of each 
+     * complex number in the plane
      */
     public void makeSet() {
-        for (int row = 0; row < height; row++) 
-            for (int col = 0; col < width; col++) 
-                if (plane[row][col].getValue() == -2) 
-                    calculateValue(plane[row][col]);
-    }
-
-
-    /**
-     * Takes a complex number as a parameter and sets its value field.
-     * Repeated multiplication is done on the complex number. If the
-     * number begins to trend to infinity, its value is set 0-100.
-     * If we multiply maxIter number of times and the number
-     * does not trend toward infinity, then its value is set to -1.
-     */
-    public void calculateValue(ComplexNumber c) {
-        ComplexNumber z = new ComplexNumber(0, 0);
-        int i = 0;
-        while (i < maxIter && z.getReal() > -2 && z.getImaginary() > -2
-            && z.getReal() < 2 && z.getImaginary() < 2)
-        {
-            z.pow(exponent);
-            z.add(c);
-            i++;
-        }
-        
-        if (i == 1) i = 2;
-        if (i == maxIter) {
-            c.setValue(-1);
-        }
-        else {
-            int percentage = (int)((double)i * (100.0 / maxIter));
-            c.setValue(percentage);
-        }
+    	calc.make(plane, height, width, maxIter, exponent, constant);
     }
 
     
@@ -126,62 +102,24 @@ public class Mandelbrot
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         for (int row = 0; row < height; row++) {
             for (int col = 0; col < width; col++) {
-                int value = plane[row][col].getValue();
-                int p = getPixel(value);
+                double value = plane[row][col].getValue();
+                int p = cp.getPixel(value);
                 img.setRGB(col, row, p);
             }
         }
-        return img;
-    }
-
-
-    /**
-     * Assigns a color based on the passed value.
-     * If value is -1, then the color is black.
-     * If the value is 0-100, a color is assigned
-     * based off of a gradual color shift.
-     * returns an integer pixel value.
-     */
-    public int getPixel(int value) { //gradual color shift
-        int r;
-        int g;
-        int b;
-        double value2 = (double)value / 10.0;
-
-        if (value < 0) {
-            r = 0;
-            g = 0;
-            b = 0;
-        }
-
-        else {
-
-            r = (int)(Math.sin(value2) * 127 + 128);
-            g = (int)(Math.sin(value2 + 2) * 127 + 128);
-            b = (int)(Math.sin(value2 + 4) * 127 + 128);
-        }
-
-        int p = (r << 16) | (g << 8) | b;
-
-        return p;
-
-    }
-
-    
-    public int getWidth() {
-        return width;
-    }
-    public int getHeight() {
-        return height;
+        
+        image = img;
+        return image;
     }
     
-    public String getEquation()
-    {
-    	return "<html>z<sub>n+1</sub> = z<sup>2</sup> + c</html>";
-    }
-    
-    public boolean isReady() {
-    	return ready;
+    public void saveImage(String dir, String name) throws IOException {
+
+    	if (!name.endsWith(".png"))
+    		name += ".png";
+    	
+    	File outputfile = new File(dir + '/' + name);
+    	ImageIO.write(image, "png", outputfile);
+
     }
 
 
@@ -194,11 +132,9 @@ public class Mandelbrot
      */
     public void zoom(double amount)
     {
-    	ready = false;
         step = step / amount;
         makePlane();
         makeSet();
-        ready = true;
     }
 
     
@@ -214,6 +150,14 @@ public class Mandelbrot
         makeSet();
 		
 	}
+    
+    public void setHeight(int h) {
+    	height = h;
+    }
+    
+    public void setWidth(int w) {
+    	width = w;
+    }
 
     
     /**
@@ -230,7 +174,6 @@ public class Mandelbrot
      * in makeSet()
      */
     public void shift(int xs, int ys) {
-    	ready = false;
     	
         center[0] = center[0] + xs * step;
         center[1] = center[1] + ys * step;
@@ -263,8 +206,36 @@ public class Mandelbrot
         plane = planeCopy;
         makeSet();
         
-        ready = true;
     }
+
+	public void updateCP(ColorPicker x) {
+		cp = x;
+		makePlane();
+        makeSet();
+		
+	}
+	
+	public void updateCalc(Calculator x ) {
+		constant = new ComplexNumber(center[0], center[1]);
+		calc = x;
+		makePlane();
+		makeSet();
+	}
+	
+	public void update() {
+		plane = new ComplexNumber[height][width];
+		makePlane();
+		makeSet();
+		
+	}
+	
+	public void setFrequency(int f) {
+		cp.setFrequency(f);
+	}
+	
+	public void setPhase(int f) {
+		cp.setPhase(f);
+	}
 
 	
 

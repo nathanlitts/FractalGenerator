@@ -1,23 +1,27 @@
 import javax.swing.*;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeListener;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionListener;
 
 
-@SuppressWarnings("serial")
-public class View extends JFrame{
 
-	private JLabel equation;
+@SuppressWarnings("serial")
+public class View extends JFrame {
+
 	private JTextField iterationsField;
 	private JTextField expField;
 	private ContentPanel content;
 	private Mandelbrot model;
+	private JComboBox<String> colorBox;
+	private JComboBox<String> fractalBox;
 	private JSlider colorSpeed;
-	private JSlider zoomSpeed;
-	private JSlider panSpeed;
+	private JSlider phaseSlider;
 	private JButton reset;
+	private JButton saveButton;
+    private JFileChooser fc;
 
 
 	/**
@@ -43,14 +47,8 @@ public class View extends JFrame{
 
 		JPanel panel = new JPanel();
 		panel.setBorder(new LineBorder(new Color(0, 0, 0), 1, true));
-		panel.setBounds(6, 6, 228, 500);
+		panel.setBounds(6, 6, 228, 280);
 		getContentPane().add(panel);
-		
-		
-		/*--- Equation ---*/
-		equation = new JLabel(model.getEquation());
-		panel.add(equation);
-		
 		
 		
 		/*--- Iterations ---*/
@@ -73,48 +71,57 @@ public class View extends JFrame{
 		panel.add(expField);
 		
 		
+		/*--- Color Theme ___*/
+		JLabel lblTheme = new JLabel("Theme:");
+		panel.add(lblTheme);
+		
+		String[] colorOptions = {"Rainbow     ", "Grayscale"};
+		colorBox = new JComboBox<String>(colorOptions);
+		panel.add(colorBox);
+		
+		
+		/*--- Fractal Type ___*/
+		JLabel lblFractal = new JLabel("Fractal:");
+		panel.add(lblFractal);
+		
+		String[] fractalOptions = {"Mandelbrot", "Julia"};
+		fractalBox = new JComboBox<String>(fractalOptions);
+		panel.add(fractalBox);
+		
+		
 		/*--- Color Frequency ---*/
 		JLabel lblColorSpeed = new JLabel("Color Frequency", JLabel.CENTER);
         lblColorSpeed.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(lblColorSpeed);
 
-		colorSpeed = new JSlider(JSlider.HORIZONTAL, 1, 11, 5);
+		colorSpeed = new JSlider(JSlider.HORIZONTAL, 1, 100, 5);
 		panel.add(colorSpeed);
 		
 		
-		/*--- Zoom ---*/
-		JLabel lblZoomSpeed = new JLabel("Zoom Speed", JLabel.CENTER);
-        lblZoomSpeed.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(lblZoomSpeed);
+		/*--- Color Phase ---*/
+		JLabel lblPhase = new JLabel("Color Phase", JLabel.CENTER);
+        lblColorSpeed.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(lblPhase);
 
-		zoomSpeed = new JSlider(JSlider.HORIZONTAL, 1, 11, 5);
-		panel.add(zoomSpeed);
-		
-		
-		/*--- Pan ---*/
-		JLabel lblPanSpeed = new JLabel("Pan Speed", JLabel.CENTER);
-        lblPanSpeed.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(lblPanSpeed);
-
-		panSpeed = new JSlider(JSlider.HORIZONTAL, 1, 11, 5);
-		panel.add(panSpeed);
+		phaseSlider = new JSlider(JSlider.HORIZONTAL, 1, 100, 5);
+		panel.add(phaseSlider);
 		
 		
 		/*--- Reset ---*/
 		reset = new JButton("Reset");
 		panel.add(reset);
 		
+		
+		/*--- Save ---*/
+		fc = new JFileChooser();
+		saveButton = new JButton("Save");
+		panel.add(saveButton);
+		
 
 	}
 
 
-	public String getIterations() {
-		return iterationsField.getText();
-	}
-	
-	public String getExponent() {
-		return expField.getText();
-	}
+	/*--- add Action Listeners ---*/
 
 	public void addIterationsListener(ActionListener listener) {
 		iterationsField.addActionListener(listener);
@@ -124,10 +131,45 @@ public class View extends JFrame{
 		expField.addActionListener(listener);
 	}
 	
+	public void addThemeListener(ActionListener listener) {
+		colorBox.addActionListener(listener);
+	}
+	
+	public void addFractalListener(ActionListener listener) {
+		fractalBox.addActionListener(listener);
+	}
+	
+	public void addFrequencyListener(ChangeListener listener) {
+		colorSpeed.addChangeListener(listener);
+	}
+	
+	public void addPhaseListener(ChangeListener listener) {
+		phaseSlider.addChangeListener(listener);
+		
+	}
+	
 	public void addResetListener(ActionListener listener) {
 		reset.addActionListener(listener);
 	}
-
+	
+	public void addSaveListener(ActionListener listener) {
+		saveButton.addActionListener(listener);
+	}
+	
+	
+	/*--- Get Field Values ---*/ 
+	
+	public String getIterations() {
+		return iterationsField.getText();
+	}
+	
+	public String getExponent() {
+		return expField.getText();
+	}
+	
+	
+	/*--- Set View Properties ---*/
+	
 	public void updateImage() {
 		content.updateImage();
 	}
@@ -140,7 +182,6 @@ public class View extends JFrame{
 		iterationsField.setText("50");
 		resetFocus();	
 	}
-
 
 	
 }

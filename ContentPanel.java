@@ -36,7 +36,7 @@ implements KeyListener, MouseListener {
 	 */
 	public void keyPressed(KeyEvent evt) { 
 
-		if (!model.isReady()) return; // Wait for the model to finish processing
+		//if (!model.isReady()) return; // Wait for the model to finish processing
 				
 		int key = evt.getKeyCode();  // keyboard code for the pressed key
 
